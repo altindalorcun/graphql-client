@@ -11,6 +11,6 @@ public record UserResponse(
         String firstName,
         String lastName,
         String mail,
-        Role role
+        String role
 ) {
 }
