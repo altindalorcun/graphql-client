@@ -1,7 +1,7 @@
 package dev.altindal.graphql_client.controller;
 
 import dev.altindal.graphql_client.dto.UserResponse;
-import dev.altindal.graphql_client.service.UserService;
+import dev.altindal.graphql_client.service.UserGraphqlRequester;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +16,9 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class UserController {
 
-    private final UserService service;
+    private final UserGraphqlRequester service;
 
-    public UserController(UserService service) {
+    public UserController(UserGraphqlRequester service) {
         this.service = service;
     }
 

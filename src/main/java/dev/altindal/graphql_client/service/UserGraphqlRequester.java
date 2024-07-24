@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class UserService {
+public class UserGraphqlRequester {
 
     private final HttpGraphQlClient graphQlClient;
 
-    public UserService() {
+    public UserGraphqlRequester() {
         WebClient client = WebClient.builder()
                 .baseUrl("http://localhost:8080/graphql")
                 .build();
