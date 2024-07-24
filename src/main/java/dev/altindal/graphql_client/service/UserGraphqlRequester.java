@@ -3,25 +3,39 @@ package dev.altindal.graphql_client.service;
 import dev.altindal.graphql_client.dto.UserCreateRequest;
 import dev.altindal.graphql_client.dto.UserResponse;
 import dev.altindal.graphql_client.dto.UserUpdateRequest;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.graphql.client.HttpGraphQlClient;
+import org.springframework.graphql.client.WebSocketGraphQlClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
+import org.springframework.web.reactive.socket.client.WebSocketClient;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class UserGraphqlRequester {
 
     private final HttpGraphQlClient graphQlClient;
+    private final WebSocketGraphQlClient graphQlWebSocketClient;
 
     public UserGraphqlRequester() {
         WebClient client = WebClient.builder()
                 .baseUrl("http://localhost:8080/graphql")
                 .build();
         graphQlClient = HttpGraphQlClient.builder(client).build();
+
+        WebSocketClient webSocketClient = new ReactorNettyWebSocketClient();
+        graphQlWebSocketClient = WebSocketGraphQlClient
+                .builder("ws://localhost:8080/graphql", webSocketClient)
+                .keepAlive(Duration.ofSeconds(30))
+                .build();
     }
 
     public List<UserResponse> getAllUsers() {
@@ -159,5 +173,32 @@ public class UserGraphqlRequester {
                 .retrieve("deleteUser")
                 .toEntity(Boolean.class)
                 .block();
+    }
+
+    @PostConstruct
+    public void listenSubscription() {
+        //language=graphql
+        String subscription = """
+                subscription {
+                    userStatusChanged {
+                        id
+                        createdAt
+                        updatedAt
+                        username
+                        firstName
+                        lastName
+                        mail
+                        role
+                    }
+                }
+                """;
+
+        graphQlWebSocketClient.document(subscription)
+                .retrieveSubscription("userStatusChanged")
+                .toEntity(UserResponse.class)
+                .subscribe(userResponse -> log.info("User changed -> " + userResponse.toString()),
+                        error -> log.info("Error : " + error),
+                        () -> log.info("Subscription completed")
+                );
     }
 }
